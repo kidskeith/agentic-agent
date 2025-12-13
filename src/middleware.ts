@@ -59,11 +59,9 @@ function isPublicPath(pathname: string): boolean {
 }
 
 // Configure which paths the middleware runs on
-export const config = {
-    matcher: [
-        '/((?!_next/static|_next/image|favicon.ico).*)',
-    ],
-};
+matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|widget.js).*)',
+],
 
 export async function middleware(request: NextRequest) {
     const origin = request.headers.get('origin');
