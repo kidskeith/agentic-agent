@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
                     port: parseInt(port),
                     user,
                     password,
+                    ssl: (host !== 'localhost' && host !== '127.0.0.1') ? { rejectUnauthorized: true } : undefined
                 });
 
                 // 3. Create database if not exists
@@ -77,6 +78,7 @@ export async function POST(request: NextRequest) {
                 DB_NAME: dbConfig.database,
 
                 // App Info
+                DB_SSL: (dbConfig.host !== 'localhost' && dbConfig.host !== '127.0.0.1') ? 'true' : 'false',
                 NEXT_PUBLIC_APP_NAME: projectConfig.name,
 
                 // Setup Flag
@@ -134,7 +136,8 @@ export async function POST(request: NextRequest) {
                     user: dbConfig.user,
                     password: dbConfig.password,
                     database: dbConfig.database,
-                    multipleStatements: true // Important for running multiple queries
+                    multipleStatements: true, // Important for running multiple queries
+                    ssl: (dbConfig.host !== 'localhost' && dbConfig.host !== '127.0.0.1') ? { rejectUnauthorized: true } : undefined
                 });
 
                 // Read the schema creation logic? 
