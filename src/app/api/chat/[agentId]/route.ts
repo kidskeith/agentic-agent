@@ -230,6 +230,7 @@ export async function POST(
                     temperature: llmConfig.temperature,
                     maxTokens: llmConfig.max_tokens,
                     maxIterations: llmConfig.max_iterations || 10,
+                    baseUrl: `${request.headers.get('x-forwarded-proto') || 'http'}://${request.headers.get('host')}`,
                 },
                 mcpConfigs || [],
                 undefined,

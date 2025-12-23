@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
             // 1. Prepare new config
             const newConfig: Record<string, string> = {
                 NEXT_PUBLIC_APP_URL: 'http://localhost:3000',
+                NEXT_PUBLIC_BASE_URL: 'http://localhost:3000',
                 NEXTAUTH_URL: 'http://localhost:3000',
                 NEXTAUTH_SECRET: uuidv4(),
 

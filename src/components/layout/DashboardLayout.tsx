@@ -59,8 +59,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set(['/agents']));
 
-    // Don't show layout for login page or setup page
-    if (pathname === '/login' || pathname === '/setup') {
+    // Don't show layout for login page, setup page, or agent embed
+    if (pathname === '/login' || pathname === '/setup' || pathname.startsWith('/agents/embed/')) {
         return <>{children}</>;
     }
 

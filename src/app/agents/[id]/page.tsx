@@ -30,6 +30,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -396,6 +403,26 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                                         value={agent.name}
                                         onChange={(e) => setAgent({ ...agent, name: e.target.value })}
                                     />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="status">Status</Label>
+                                    <Select
+                                        value={agent.status}
+                                        onValueChange={(value: 'active' | 'inactive' | 'draft') => setAgent({ ...agent, status: value })}
+                                    >
+                                        <SelectTrigger id="status">
+                                            <SelectValue placeholder="Select status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="draft">Draft</SelectItem>
+                                            <SelectItem value="active">Active</SelectItem>
+                                            <SelectItem value="inactive">Inactive</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-xs text-muted-foreground">
+                                        Only active agents can be used in the chat widget or embed.
+                                    </p>
                                 </div>
 
                                 <div className="space-y-2">

@@ -301,7 +301,7 @@ export async function POST(request: NextRequest) {
 
         writeFileSync(filePath, buffer);
 
-        const downloadUrl = `${getBaseUrl()}/exports/${finalFilename}`;
+        const downloadUrl = `${request.nextUrl.origin}/exports/${finalFilename}`;
 
         console.log(`[Export] Generated ${type.toUpperCase()}: ${finalFilename}`);
 

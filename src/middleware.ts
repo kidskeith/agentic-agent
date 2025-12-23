@@ -21,7 +21,10 @@ const publicPaths = [
     '/api/auth',
     '/api/chat', // Widget API
     '/api/init',
+    '/api/agents/export', // Export API (called internally by AI agent)
     '/widget.js',
+    '/agents/embed', // Public agent embed
+    '/api/sessions', // Public access for sessions (protected by internal logic)
 ];
 
 function getCorsHeaders(origin: string | null): Record<string, string> {

@@ -14,6 +14,7 @@ export interface AgenticConfig {
     temperature?: number;
     maxTokens?: number;
     maxIterations?: number;
+    baseUrl?: string;
 }
 
 export interface MCPConfigDB {
@@ -216,6 +217,7 @@ export async function executeAgenticLoop(
         temperature = 0.7,
         maxTokens = 4096,
         maxIterations = 10,
+        baseUrl = 'http://localhost:3000',
     } = config;
 
     const genAI = new GoogleGenAI({ apiKey });
@@ -608,11 +610,14 @@ export async function executeAgenticLoop(
                         console.log(`[Export] Executing ${fc.name} tool...`);
 
                         try {
-                            // Get base URL
-                            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+                            // Get base URL from config or fallback
+                            const apiBaseUrl = config.baseUrl || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+                            const exportApiUrl = `${apiBaseUrl}/api/agents/export`;
                             
+                            console.log(`[Export] Using API URL: ${exportApiUrl}`);
+
                             // Call export API
-                            const response = await fetch(`${baseUrl}/api/agents/export`, {
+                            const response = await fetch(exportApiUrl, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({

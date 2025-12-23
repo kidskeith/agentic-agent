@@ -2,6 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 
 // Available Gemini models
 export const GEMINI_MODELS = [
+    { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', description: 'Latest fast reasoning model' },
     { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro', description: 'Latest and greatest model' },
     { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Fast and efficient for most tasks' },
     { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'Advanced reasoning and analysis' },
