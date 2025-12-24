@@ -22,6 +22,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import ChartRenderer from '@/components/ChatWidget/ChartRenderer';
 
 interface ChatSession {
     id: string;
@@ -377,6 +378,32 @@ export default function SessionDetailPage({
                                                 </CardContent>
                                             </Card>
                                         ))}
+                                    </div>
+                                )}
+
+                                {message.role === 'assistant' && messageToolCalls.some(tc => tc.tool_name === 'generate_chart') && (
+                                    <div className="ml-12">
+                                        {messageToolCalls
+                                            .filter(tc => tc.tool_name === 'generate_chart' && tc.status === 'success' && tc.tool_input)
+                                            .map((tc) => {
+                                                try {
+                                                    const chartParams = JSON.parse(tc.tool_input!);
+                                                    return (
+                                                        <ChartRenderer
+                                                            key={tc.id}
+                                                            type={chartParams.type}
+                                                            title={chartParams.title}
+                                                            data={chartParams.data}
+                                                            xAxisKey={chartParams.xAxisKey}
+                                                            yAxisKey={chartParams.yAxisKey}
+                                                        />
+                                                    );
+                                                } catch (e) {
+                                                    console.error('Failed to parse chart tool input:', e);
+                                                    return null;
+                                                }
+                                            })
+                                        }
                                     </div>
                                 )}
                             </div>

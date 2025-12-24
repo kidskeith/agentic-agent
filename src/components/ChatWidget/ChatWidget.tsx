@@ -101,6 +101,13 @@ export default function ChatWidget({
         }
     }, [isOpen]);
 
+    // Focus input when loading finishes
+    useEffect(() => {
+        if (!isLoading && isOpen && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [isLoading, isOpen]);
+
     // Load session and history on mount
     useEffect(() => {
         const loadSession = async () => {

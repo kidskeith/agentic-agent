@@ -32,11 +32,55 @@ interface StreamRequestBody {
     embedToken?: string;
 }
 
-// Helper to save chat session and messages
-async function saveSessionAndMessages(
+// Helper to ensure session exists
+async function ensureSessionExists(
     agentId: string,
     sessionId: string,
-    userMessage: ChatMessage,
+    isNewSession: boolean,
+    clientName?: string,
+    clientLevel?: string
+): Promise<void> {
+    if (isNewSession) {
+        await query(
+            `INSERT INTO chat_sessions (id, agent_id, session_source, client_name, client_level, message_count, tool_call_count)
+       VALUES (?, ?, 'widget', ?, ?, 0, 0)`,
+            [sessionId, agentId, clientName || null, clientLevel || null]
+        );
+    } else {
+        const existingSession = await queryOne<{ id: string }>(
+            'SELECT id FROM chat_sessions WHERE id = ?',
+            [sessionId]
+        );
+        if (!existingSession) {
+            await query(
+                `INSERT INTO chat_sessions (id, agent_id, session_source, client_name, client_level, message_count, tool_call_count)
+         VALUES (?, ?, 'widget', ?, ?, 0, 0)`,
+                [sessionId, agentId, clientName || null, clientLevel || null]
+            );
+        }
+    }
+}
+
+// Helper to save user message
+async function saveUserMessage(sessionId: string, userMessage: ChatMessage): Promise<string> {
+    const userMessageId = uuidv4();
+    await query(
+        `INSERT INTO chat_messages (id, session_id, role, content) VALUES (?, ?, 'user', ?)`,
+        [userMessageId, sessionId, userMessage.content]
+    );
+    
+    // Increment message count
+    await query(
+        `UPDATE chat_sessions SET message_count = message_count + 1 WHERE id = ?`,
+        [sessionId]
+    );
+    
+    return userMessageId;
+}
+
+// Helper to save assistant message and tool calls
+async function saveAssistantAndTools(
+    sessionId: string,
     assistantMessage: string,
     thoughts: string | null,
     toolCalls: Array<{
@@ -45,27 +89,8 @@ async function saveSessionAndMessages(
         toolOutput: string;
         executionTimeMs: number;
         status: 'success' | 'error';
-    }>,
-    isNewSession: boolean,
-    clientName?: string,
-    clientLevel?: string
+    }>
 ): Promise<void> {
-    // Create session if new
-    if (isNewSession) {
-        await query(
-            `INSERT INTO chat_sessions (id, agent_id, session_source, client_name, client_level, message_count, tool_call_count)
-       VALUES (?, ?, 'widget', ?, ?, 0, 0)`,
-            [sessionId, agentId, clientName || null, clientLevel || null]
-        );
-    }
-
-    // Save user message
-    const userMessageId = uuidv4();
-    await query(
-        `INSERT INTO chat_messages (id, session_id, role, content) VALUES (?, ?, 'user', ?)`,
-        [userMessageId, sessionId, userMessage.content]
-    );
-
     // Save assistant message with thoughts
     const assistantMessageId = uuidv4();
     await query(
@@ -95,7 +120,7 @@ async function saveSessionAndMessages(
     // Update session counts
     await query(
         `UPDATE chat_sessions 
-     SET message_count = message_count + 2, 
+     SET message_count = message_count + 1, 
          tool_call_count = tool_call_count + ?
      WHERE id = ?`,
         [toolCalls.length, sessionId]
@@ -237,8 +262,15 @@ export async function POST(
             }
         }
 
-        // Get the last user message for saving
-        const lastUserMessage = messages[messages.length - 1];
+        // Save user message immediately before starting the stream
+        try {
+            await ensureSessionExists(agentId, sessionId!, isNewSession, clientName, clientLevel);
+            const lastUserMessage = messages[messages.length - 1];
+            await saveUserMessage(sessionId!, lastUserMessage);
+            console.log(`[Stream] Saved user message for session ${sessionId}`);
+        } catch (dbError) {
+            console.error('[Stream] Error saving session/user message:', dbError);
+        }
 
         // Create SSE stream
         const encoder = new TextEncoder();
@@ -266,7 +298,7 @@ export async function POST(
                         fileSearchStore
                     );
 
-                    // Save to database
+                    // Save assistant response to database
                     try {
                         const toolCallsForDB = result.allToolCalls.map(tc => ({
                             toolName: tc.toolName,
@@ -276,21 +308,17 @@ export async function POST(
                             status: tc.status as 'success' | 'error',
                         }));
 
-                        await saveSessionAndMessages(
-                            agentId,
+                        await saveAssistantAndTools(
                             sessionId!,
-                            lastUserMessage,
                             result.finalResponse,
                             result.allThoughts && result.allThoughts.length > 0
                                 ? result.allThoughts.join('\n\n---\n\n')
                                 : null,
-                            toolCallsForDB,
-                            isNewSession,
-                            clientName,
-                            clientLevel
+                            toolCallsForDB
                         );
+                        console.log(`[Stream] Saved assistant response for session ${sessionId}`);
                     } catch (dbError) {
-                        console.error('Failed to save to database:', dbError);
+                        console.error('[Stream] Failed to save assistant response:', dbError);
                     }
 
                     // Send final result with sessionId
